@@ -1,0 +1,12 @@
+{
+  "name": "todo-lambda",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "lambda.js",
+  "dependencies": {
+    "aws-sdk": "^2.1414.0"
+  },
+  "scripts": {
+    "build": "zip -r ../infra/lambda_function_payload.zip ."
+  }
+}
