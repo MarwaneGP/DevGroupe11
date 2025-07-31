@@ -17,10 +17,10 @@ terraform {
   }
   
   backend "s3" {
-    bucket         = "terraform-backend-terraformbackends3bucket-fuz3u5yspci0"
+    bucket         = "terraform-backend-s3-274399924176-eu-west-1"
     key            = "infraiim"
     region         = "eu-west-1"
-    dynamodb_table = "terraform-backend-TerraformBackendDynamoDBTable-KTO4R4Y635QG"
+    dynamodb_table = "terraform-backend-locks-274399924176"
     encrypt        = true
   }
 }
