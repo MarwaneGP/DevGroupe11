@@ -182,6 +182,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Download Lambda ZIP artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-zip
+          path: terraform/lambda/
+
       - name: Download build
         uses: actions/download-artifact@v4
         with:
