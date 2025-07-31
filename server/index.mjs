@@ -8,6 +8,19 @@ export const handler = async (event) => {
   const path = event.path;
   const body = event.body ? JSON.parse(event.body) : {};
 
+  // 👉 Gestion des requêtes CORS preflight
+  if (method === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+      },
+      body: '',
+    };
+  }
+
   try {
     if (method === 'GET' && path === '/todos') {
       return await getTodos();
