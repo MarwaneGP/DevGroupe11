@@ -86,53 +86,7 @@ resource "aws_api_gateway_integration" "delete_todo" {
   uri                     = aws_lambda_function.lambda_function_over_https.invoke_arn
 }
 
-# Permissions pour toutes les méthodes
-resource "aws_lambda_permission" "apigw_lambda" {
-  statement_id  = "AllowExecutionFromAPIGateway"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.lambda_function_over_https.function_name
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_api_gateway_rest_api.dynamo_db_operations.execution_arn}/*/*"
-}
-
-# Déploiement
-resource "aws_api_gateway_deployment" "api" {
-  rest_api_id = aws_api_gateway_rest_api.dynamo_db_operations.id
-
-  triggers = {
-    redeployment = sha1(jsonencode([
-      aws_api_gateway_resource.todos.id,
-      aws_api_gateway_resource.todo_item.id,
-      aws_api_gateway_method.get_todos.id,
-      aws_api_gateway_method.post_todos.id,
-      aws_api_gateway_method.put_todo.id,
-      aws_api_gateway_method.delete_todo.id,
-      aws_api_gateway_method.options_todos.id,        
-      aws_api_gateway_method.options_todo_item.id,   
-    ]))
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-
-  depends_on = [
-    aws_api_gateway_integration.get_todos,
-    aws_api_gateway_integration.post_todos,
-    aws_api_gateway_integration.put_todo,
-    aws_api_gateway_integration.delete_todo,
-    aws_api_gateway_integration.options_todos,        
-    aws_api_gateway_integration.options_todo_item,    
-  ]
-}
-
-resource "aws_api_gateway_stage" "api" {
-  deployment_id = aws_api_gateway_deployment.api.id
-  rest_api_id   = aws_api_gateway_rest_api.dynamo_db_operations.id
-  stage_name    = "prod"
-}
-
-# OPTIONS /todos - CORS preflight
+# CORS: OPTIONS /todos
 resource "aws_api_gateway_method" "options_todos" {
   authorization = "NONE"
   http_method   = "OPTIONS"
@@ -162,6 +116,9 @@ resource "aws_api_gateway_method_response" "options_todos_response" {
     "method.response.header.Access-Control-Allow-Headers" = true
     "method.response.header.Access-Control-Allow-Methods" = true
   }
+  response_models = {
+    "application/json" = "Empty"
+  }
 }
 
 resource "aws_api_gateway_integration_response" "options_todos_integration_response" {
@@ -175,9 +132,12 @@ resource "aws_api_gateway_integration_response" "options_todos_integration_respo
     "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
     "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,PUT,DELETE,OPTIONS'"
   }
+  response_templates = {
+    "application/json" = ""
+  }
 }
 
-# OPTIONS /todos/{id} - CORS preflight
+# CORS: OPTIONS /todos/{id}
 resource "aws_api_gateway_method" "options_todo_item" {
   authorization = "NONE"
   http_method   = "OPTIONS"
@@ -207,6 +167,9 @@ resource "aws_api_gateway_method_response" "options_todo_item_response" {
     "method.response.header.Access-Control-Allow-Headers" = true
     "method.response.header.Access-Control-Allow-Methods" = true
   }
+  response_models = {
+    "application/json" = "Empty"
+  }
 }
 
 resource "aws_api_gateway_integration_response" "options_todo_item_integration_response" {
@@ -220,4 +183,53 @@ resource "aws_api_gateway_integration_response" "options_todo_item_integration_r
     "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
     "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,PUT,DELETE,OPTIONS'"
   }
+  response_templates = {
+    "application/json" = ""
+  }
+}
+
+# Permissions pour toutes les méthodes
+resource "aws_lambda_permission" "apigw_lambda" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda_function_over_https.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.dynamo_db_operations.execution_arn}/*/*"
+}
+
+# Déploiement
+resource "aws_api_gateway_deployment" "api" {
+  rest_api_id = aws_api_gateway_rest_api.dynamo_db_operations.id
+
+  triggers = {
+    redeployment = sha1(jsonencode([
+      aws_api_gateway_resource.todos.id,
+      aws_api_gateway_resource.todo_item.id,
+      aws_api_gateway_method.get_todos.id,
+      aws_api_gateway_method.post_todos.id,
+      aws_api_gateway_method.put_todo.id,
+      aws_api_gateway_method.delete_todo.id,
+      aws_api_gateway_method.options_todos.id,
+      aws_api_gateway_method.options_todo_item.id,
+    ]))
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  depends_on = [
+    aws_api_gateway_integration.get_todos,
+    aws_api_gateway_integration.post_todos,
+    aws_api_gateway_integration.put_todo,
+    aws_api_gateway_integration.delete_todo,
+    aws_api_gateway_integration.options_todos,
+    aws_api_gateway_integration.options_todo_item,
+  ]
+}
+
+resource "aws_api_gateway_stage" "api" {
+  deployment_id = aws_api_gateway_deployment.api.id
+  rest_api_id   = aws_api_gateway_rest_api.dynamo_db_operations.id
+  stage_name    = "prod"
 }
