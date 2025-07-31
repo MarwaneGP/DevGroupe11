@@ -33,13 +33,16 @@ function App() {
       redirect: 'follow',
     };
 
-    const todo = await fetch(API_URL, requestOptions)
-      .then((response) => response.text())
-      .then((result) => console.log(result))
-      .catch((error) => console.error(error));
+    try {
+      const response = await fetch(API_URL, requestOptions);
+      const result = await response.text();
+      console.log(result);
 
-    setTodos([...todos, todo]);
-    setNewTodo('');
+      setTodos([...todos, todo]);
+      setNewTodo('');
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const toggleComplete = async (todo) => {
