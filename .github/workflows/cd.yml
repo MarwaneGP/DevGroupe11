@@ -36,9 +36,31 @@ jobs:
           VITE_API_URL: 'https://test-api.example.com'
         run: npm run build
 
+  build-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build Lambda ZIP
+        working-directory: ./server
+        run: |
+          npm ci
+          npm run build
+
+      - name: Upload Lambda ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda-zip
+          path: terraform/lambda/lambda_function_payload.zip
+
   # 1️⃣ Déployer le backend
   deploy-backend:
-    needs: test
+    needs: ['test', 'build-backend']
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     outputs:
@@ -47,6 +69,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Download Lambda ZIP artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-zip
+          path: terraform/lambda/
 
       - name: Configure AWS
         uses: aws-actions/configure-aws-credentials@v4
