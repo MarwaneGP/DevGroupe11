@@ -38,7 +38,7 @@ function App() {
       const result = await response.text();
       console.log(result);
 
-      setTodos([...todos, todo]);
+      setTodos([...todos, JSON.parse(raw)]);
       setNewTodo('');
     } catch (error) {
       console.error(error);
