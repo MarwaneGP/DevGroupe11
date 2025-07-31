@@ -1,0 +1,114 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Encrypted Terraform Backend Infrastructure for IIM Cloud Project
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: terraform-backend
+    Description: Name prefix for all backend resources
+
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging, prod]
+    Description: Environment name for resource tagging
+
+Resources:
+  # S3 Bucket pour le state Terraform
+  TerraformBackends3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${ProjectName}-s3-${AWS::AccountId}-${AWS::Region}'
+      AccessControl: Private
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: 'aws:kms'
+              KMSMasterKeyID: !GetAtt TerraformBackendKMSKey.Arn
+            BucketKeyEnabled: true
+      VersioningConfiguration:
+        Status: Enabled
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+
+  # KMS Key pour le chiffrement
+  TerraformBackendKMSKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub 'KMS Key for ${ProjectName} Terraform Backend encryption'
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: 2012-10-17
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+            Action: 'kms:*'
+            Resource: '*'
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+
+  # KMS Alias
+  TerraformBackendKMSAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub 'alias/${ProjectName}-terraform-backend'
+      TargetKeyId: !Ref TerraformBackendKMSKey
+
+  # DynamoDB Table pour le locking
+  TerraformBackendDynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${ProjectName}-locks-${AWS::AccountId}'
+      AttributeDefinitions:
+        - AttributeName: LockID
+          AttributeType: S
+      KeySchema:
+        - AttributeName: LockID
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      SSESpecification:
+        SSEEnabled: true
+        KMSMasterKeyId: !GetAtt TerraformBackendKMSKey.Arn
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+
+Outputs:
+  S3Bucket:
+    Description: The Terraform Backend S3 Bucket
+    Value: !Ref TerraformBackends3Bucket
+    Export:
+      Name: !Sub '${ProjectName}-S3Bucket'
+
+  DynamoDBTable:
+    Description: The Terraform Backend DynamoDB Table for state locking
+    Value: !Ref TerraformBackendDynamoDBTable
+    Export:
+      Name: !Sub '${ProjectName}-DynamoDBTable'
+
+  KMSKeyId:
+    Description: The KMS Key ID for encryption
+    Value: !Ref TerraformBackendKMSKey
+    Export:
+      Name: !Sub '${ProjectName}-KMSKey'
+
+  Region:
+    Description: AWS Region where resources are deployed
+    Value: !Ref AWS::Region
+    Export:
+      Name: !Sub '${ProjectName}-Region'
