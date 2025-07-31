@@ -16,12 +16,31 @@ function App() {
 
   const addTodo = async () => {
     if (!newTodo.trim()) return;
-    const todo = { id: uuidv4(), title: newTodo, completed: false };
-    await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(todo),
+
+    const myHeaders = new Headers();
+    myHeaders.append('Content-Type', 'application/json');
+
+    const raw = JSON.stringify({
+      id: uuidv4(),
+      title: newTodo,
+      completed: false,
     });
+
+    const requestOptions = {
+      method: 'POST',
+      headers: myHeaders,
+      body: raw,
+      redirect: 'follow',
+    };
+
+    const todo = await fetch(
+      'https://t3d3y94jj9.execute-api.eu-west-1.amazonaws.com/prod/todos',
+      requestOptions
+    )
+      .then((response) => response.text())
+      .then((result) => console.log(result))
+      .catch((error) => console.error(error));
+
     setTodos([...todos, todo]);
     setNewTodo('');
   };
