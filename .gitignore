@@ -56,20 +56,9 @@ terraform/lambda/lambda_function_payload.zip
 .aws/
 aws-exports.js
 
-# Docker
-.dockerignore
-Dockerfile
-docker-compose.yml
-docker-compose.override.yml
-
 # Lambda artifacts
 *.zip
 lambda_function_payload.zip
-
-# Package manager
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
 
 # Runtime data
 pids
