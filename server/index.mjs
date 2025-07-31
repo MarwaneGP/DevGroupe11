@@ -23,20 +23,6 @@ export const handler = async (event) => {
     return response(400, { message: 'Invalid JSON body' });
   }
 
-  // 👉 Gestion des requêtes CORS preflight
-  if (method === 'OPTIONS') {
-    console.log('CORS preflight request');
-    return {
-      statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': '*',
-        'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
-      },
-      body: '',
-    };
-  }
-
   try {
     console.log(`Received ${method} request on ${path} with body:`, body);
 
