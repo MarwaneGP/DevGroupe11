@@ -33,10 +33,7 @@ function App() {
       redirect: 'follow',
     };
 
-    const todo = await fetch(
-      'https://t3d3y94jj9.execute-api.eu-west-1.amazonaws.com/prod/todos',
-      requestOptions
-    )
+    const todo = await fetch(API_URL, requestOptions)
       .then((response) => response.text())
       .then((result) => console.log(result))
       .catch((error) => console.error(error));
