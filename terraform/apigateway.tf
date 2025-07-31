@@ -86,7 +86,7 @@ resource "aws_api_gateway_integration" "delete_todo" {
   uri                     = aws_lambda_function.lambda_function_over_https.invoke_arn
 }
 
-# Permissions pour Lambda
+# Permissions pour toutes les méthodes
 resource "aws_lambda_permission" "apigw_lambda" {
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
@@ -107,6 +107,8 @@ resource "aws_api_gateway_deployment" "api" {
       aws_api_gateway_method.post_todos.id,
       aws_api_gateway_method.put_todo.id,
       aws_api_gateway_method.delete_todo.id,
+      aws_api_gateway_method.options_todos.id,        
+      aws_api_gateway_method.options_todo_item.id,   
     ]))
   }
 
@@ -119,6 +121,8 @@ resource "aws_api_gateway_deployment" "api" {
     aws_api_gateway_integration.post_todos,
     aws_api_gateway_integration.put_todo,
     aws_api_gateway_integration.delete_todo,
+    aws_api_gateway_integration.options_todos,        
+    aws_api_gateway_integration.options_todo_item,    
   ]
 }
 
@@ -126,4 +130,94 @@ resource "aws_api_gateway_stage" "api" {
   deployment_id = aws_api_gateway_deployment.api.id
   rest_api_id   = aws_api_gateway_rest_api.dynamo_db_operations.id
   stage_name    = "prod"
+}
+
+# OPTIONS /todos - CORS preflight
+resource "aws_api_gateway_method" "options_todos" {
+  authorization = "NONE"
+  http_method   = "OPTIONS"
+  resource_id   = aws_api_gateway_resource.todos.id
+  rest_api_id   = aws_api_gateway_rest_api.dynamo_db_operations.id
+}
+
+resource "aws_api_gateway_integration" "options_todos" {
+  http_method = aws_api_gateway_method.options_todos.http_method
+  resource_id = aws_api_gateway_resource.todos.id
+  rest_api_id = aws_api_gateway_rest_api.dynamo_db_operations.id
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+resource "aws_api_gateway_method_response" "options_todos_response" {
+  rest_api_id = aws_api_gateway_rest_api.dynamo_db_operations.id
+  resource_id = aws_api_gateway_resource.todos.id
+  http_method = aws_api_gateway_method.options_todos.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "options_todos_integration_response" {
+  rest_api_id = aws_api_gateway_rest_api.dynamo_db_operations.id
+  resource_id = aws_api_gateway_resource.todos.id
+  http_method = aws_api_gateway_method.options_todos.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+}
+
+# OPTIONS /todos/{id} - CORS preflight
+resource "aws_api_gateway_method" "options_todo_item" {
+  authorization = "NONE"
+  http_method   = "OPTIONS"
+  resource_id   = aws_api_gateway_resource.todo_item.id
+  rest_api_id   = aws_api_gateway_rest_api.dynamo_db_operations.id
+}
+
+resource "aws_api_gateway_integration" "options_todo_item" {
+  http_method = aws_api_gateway_method.options_todo_item.http_method
+  resource_id = aws_api_gateway_resource.todo_item.id
+  rest_api_id = aws_api_gateway_rest_api.dynamo_db_operations.id
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+resource "aws_api_gateway_method_response" "options_todo_item_response" {
+  rest_api_id = aws_api_gateway_rest_api.dynamo_db_operations.id
+  resource_id = aws_api_gateway_resource.todo_item.id
+  http_method = aws_api_gateway_method.options_todo_item.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "options_todo_item_integration_response" {
+  rest_api_id = aws_api_gateway_rest_api.dynamo_db_operations.id
+  resource_id = aws_api_gateway_resource.todo_item.id
+  http_method = aws_api_gateway_method.options_todo_item.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-Control-Allow-Methods" = "'PUT,DELETE,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
 }

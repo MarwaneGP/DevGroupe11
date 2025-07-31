@@ -84,6 +84,14 @@ jobs:
             -target=aws_api_gateway_integration.post_todos \
             -target=aws_api_gateway_integration.put_todo \
             -target=aws_api_gateway_integration.delete_todo \
+            -target=aws_api_gateway_method.options_todos \
+            -target=aws_api_gateway_method.options_todo_item \
+            -target=aws_api_gateway_integration.options_todos \
+            -target=aws_api_gateway_integration.options_todo_item \
+            -target=aws_api_gateway_method_response.options_todos_response \
+            -target=aws_api_gateway_method_response.options_todo_item_response \
+            -target=aws_api_gateway_integration_response.options_todos_integration_response \
+            -target=aws_api_gateway_integration_response.options_todo_item_integration_response \
             -target=aws_lambda_permission.apigw_lambda \
             -target=aws_api_gateway_deployment.api \
             -target=aws_api_gateway_stage.api \
