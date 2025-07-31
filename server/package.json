@@ -4,7 +4,8 @@
   "type": "module",
   "main": "lambda.js",
   "dependencies": {
-    "aws-sdk": "^2.1414.0"
+    "@aws-sdk/client-dynamodb": "^3.693.0",
+    "@aws-sdk/lib-dynamodb": "^3.693.0"
   },
   "scripts": {
     "build": "zip -r ../terraform/lambda/lambda_function_payload.zip ."

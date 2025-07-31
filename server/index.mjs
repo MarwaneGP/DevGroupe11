@@ -1,6 +1,14 @@
-import AWS from 'aws-sdk';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import {
+  DynamoDBDocumentClient,
+  ScanCommand,
+  PutCommand,
+  UpdateCommand,
+  DeleteCommand,
+} from '@aws-sdk/lib-dynamodb';
 
-const dynamodb = new AWS.DynamoDB.DocumentClient();
+const client = new DynamoDBClient({});
+const dynamodb = DynamoDBDocumentClient.from(client);
 const TABLE_NAME = process.env.TABLE_NAME || 'todos';
 
 export const handler = async (event) => {
@@ -50,8 +58,9 @@ export const handler = async (event) => {
 // === Handlers ===
 
 const getTodos = async () => {
-  const result = await dynamodb.scan({ TableName: TABLE_NAME }).promise();
-  return response(200, result.Items);
+  const command = new ScanCommand({ TableName: TABLE_NAME });
+  const result = await dynamodb.send(command);
+  return response(200, result.Items || []);
 };
 
 const createTodo = async (todo) => {
@@ -59,40 +68,37 @@ const createTodo = async (todo) => {
     return response(400, { message: 'Missing id or title' });
   }
 
-  await dynamodb
-    .put({
-      TableName: TABLE_NAME,
-      Item: todo,
-    })
-    .promise();
+  const command = new PutCommand({
+    TableName: TABLE_NAME,
+    Item: todo,
+  });
 
+  await dynamodb.send(command);
   return response(201, todo);
 };
 
 const updateTodo = async (id, data) => {
-  await dynamodb
-    .update({
-      TableName: TABLE_NAME,
-      Key: { id },
-      UpdateExpression: 'SET title = :t, completed = :c',
-      ExpressionAttributeValues: {
-        ':t': data.title || '',
-        ':c': data.completed ?? false,
-      },
-    })
-    .promise();
+  const command = new UpdateCommand({
+    TableName: TABLE_NAME,
+    Key: { id },
+    UpdateExpression: 'SET title = :t, completed = :c',
+    ExpressionAttributeValues: {
+      ':t': data.title || '',
+      ':c': data.completed ?? false,
+    },
+  });
 
+  await dynamodb.send(command);
   return response(200, { message: 'Updated' });
 };
 
 const deleteTodo = async (id) => {
-  await dynamodb
-    .delete({
-      TableName: TABLE_NAME,
-      Key: { id },
-    })
-    .promise();
+  const command = new DeleteCommand({
+    TableName: TABLE_NAME,
+    Key: { id },
+  });
 
+  await dynamodb.send(command);
   return response(200, { message: 'Deleted' });
 };
 
