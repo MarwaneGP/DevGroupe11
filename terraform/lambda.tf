@@ -1,4 +1,9 @@
-# Lambda function
+resource "aws_cloudwatch_log_group" "lambda_logs" {
+  name              = "/aws/lambda/${aws_lambda_function.lambda_function_over_https.function_name}"
+  retention_in_days = 7
+  tags              = var.tags
+}
+
 resource "aws_lambda_function" "lambda_function_over_https" {
   filename         = "${path.module}/lambda/lambda_function_payload.zip"
   function_name    = "TodosLambdaFunction"
@@ -6,12 +11,14 @@ resource "aws_lambda_function" "lambda_function_over_https" {
   handler          = "index.handler"
   source_code_hash = filebase64sha256("${path.module}/lambda/lambda_function_payload.zip")
   runtime          = "nodejs20.x"
-  
+
   environment {
     variables = {
       TABLE_NAME = aws_dynamodb_table.todos_table.name
     }
   }
-  
+
   tags = var.tags
+
+  depends_on = [aws_cloudwatch_log_group.lambda_logs]
 }
